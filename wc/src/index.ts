@@ -2,34 +2,74 @@
 
 import fs from 'fs';
 import { platform } from 'os';
-import path from 'path';
 
-enum ERRORS {
-  'fileName' = 'you need more: file name or the path...',
+const flags = { c: false, l: false, w: false, m: false };
+let file: string = '';
+let fileName: string = '';
+let filePath: string = '';
+let output: string = '';
+
+const args = process.argv.slice(2);
+
+let i = 0;
+for (const arg of args) {
+  if (arg === '-c') {
+    flags.c = true;
+  } else if (arg === '-l') {
+    flags.l = true;
+  } else if (arg === '-w') {
+    flags.w = true;
+  } else if (arg === '-m') {
+    flags.m = true;
+  } else {
+    filePath = arg;
+  }
 }
 
-(function () {
-  const args = process.argv.slice(2);
-  const filePath = doesFileExist(args[1] || '');
+let content: string;
 
-  switch (args[0]) {
-    case '-c':
-      getSizeOfFile(filePath);
-      break;
-
-    case '-l':
-      getNumberOfLines(filePath);
-      break;
-
-    case '-w':
-      getNumberOfWords(filePath);
-      break;
-
-    default:
-      console.log('...');
-      break;
+if (args.length === 0) {
+  content = fs.readFileSync(0, 'utf-8');
+} else {
+  filePath = args[0] as string;
+  fileName = getFileNameFromPath(filePath);
+  try {
+    content = fs.readFileSync(filePath, 'utf-8');
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
   }
-})();
+}
+
+if (flags.c) {
+  const byteCount = Buffer.from(content, 'utf-8').length;
+  output += `${byteCount}\t`;
+}
+
+if (flags.l) {
+  output += `${getNumberOfLines(content)}\t`;
+}
+
+if (flags.w) {
+  output += `${getNumberOfWords(content)}\t`;
+}
+
+if (flags.m) {
+  output += `${getNumberOfChar(content)}\t`;
+}
+
+if (!output) {
+  const byteCount = Buffer.from(content, 'utf-8').length;
+  output += `${byteCount}\t${getNumberOfLines(content)}\t${getNumberOfWords(
+    content
+  )}\t`;
+}
+
+if (fileName) {
+  output += `${fileName}`;
+}
+
+console.log(output);
 
 function getFileNameFromPath(filePath: string): string {
   let fileName: string | undefined = '';
@@ -41,27 +81,15 @@ function getFileNameFromPath(filePath: string): string {
   return fileName || '';
 }
 
-function getSizeOfFile(arg: string): void {
-  return console.log(`${fs.statSync(arg).size} ${getFileNameFromPath(arg)}`);
+function getNumberOfLines(content: string): number {
+  const lineLength = content.split('\n').length - 1;
+  return lineLength;
 }
 
-function getNumberOfLines(arg: string): void {
-  const file = fs.readFileSync(arg, 'utf-8');
-  const lineLength = file.split('\n').length - 1;
-  const fileName = getFileNameFromPath(arg);
-  return console.log(`${lineLength} ${fileName}`);
+function getNumberOfWords(content: string): number {
+  return content.split(/\s+/).length - 1;
 }
 
-function getNumberOfWords(arg: string): void {
-  const fileWords = fs.readFileSync(arg, 'utf-8').split(/\s+/).length - 1;
-  return console.log(`${fileWords} ${getFileNameFromPath(arg)}`);
-}
-
-function doesFileExist(arg: string) {
-  const filePath = path.join(process.cwd(), arg);
-  if (!fs.existsSync(filePath)) {
-    console.error(ERRORS.fileName);
-    return process.exit(1);
-  }
-  return filePath;
+function getNumberOfChar(content: string): number {
+  return content.split('').length;
 }

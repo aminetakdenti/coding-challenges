@@ -1,7 +1,8 @@
 {
   "name": "wc",
   "bin": {
-    "ccwc": "./dist/index.js"
+    "ccwc": "./dist/index.js",
+    "cccwc": "./dist/app.js"
   },
   "version": "1.0.0",
   "description": "",
