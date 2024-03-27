@@ -1,0 +1,20 @@
+hi go
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
+func main() {
+	if fi, err := os.Stdin.Stat(); err == nil && fi.Mode().IsRegular() {
+        fmt.Println("here")
+		// Read from stdin (piping)
+        data, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			panic("error")
+		}
+		fmt.Println(data)
+	}
+}
